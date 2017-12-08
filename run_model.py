@@ -29,7 +29,6 @@ tf.app.flags.DEFINE_string("eval_data", "./data/*.eval", "include wildcards to a
 tf.app.flags.DEFINE_string("predict_data", "./data/*.predict", "include wildcards to access multiple datafiles.")
 tf.app.flags.DEFINE_string("model_path", "./model/", "Root directory for model.")
 tf.app.flags.DEFINE_string("exp_name", "cws", "Root directory for model.")
-tf.app.flags.DEFINE_string("log_path", "./log/", "Root directory for all logging.")
 tf.app.flags.DEFINE_string("vocab_path", "./data/vocab.txt", "Path expression to text vocabulary file.")
 
 # important settings
@@ -39,7 +38,7 @@ tf.app.flags.DEFINE_boolean("single_pass", False, "traverse the corpus for ever 
 # network hyperparameters
 tf.app.flags.DEFINE_string("pretrain_embedding", None, "Path express to binary embedding file.")
 tf.app.flags.DEFINE_boolean("fine_tune", True, "fine tune the embedding or not.")
-tf.app.flags.DEFINE_integer("emb_size", 128, "dimension of word embeddings.")
+tf.app.flags.DEFINE_integer("emb_size", 50, "dimension of word embeddings.")
 tf.app.flags.DEFINE_integer("vocab_size", 500000, "Size of vocabulary.")
 tf.app.flags.DEFINE_integer("batch_size", 16, "minibatch size")
 tf.app.flags.DEFINE_integer("hidden_size", 256, "dimension of RNN hidden states.")
@@ -62,6 +61,7 @@ def run_train(model, batcher):
             if global_step % 100 == 0:
                 model.file_writer.add_summary(summary, global_step)
                 model.save_session()
+                tf.logging.info("global_step = {}".format(global_step))
     except KeyboardInterrupt:
         tf.logging.info("Caught keyboard interrupt on worker. Close session...")
         model.close_session()
@@ -120,12 +120,10 @@ def run_predict(model, batcher):
 def main(_):
     # Make a namedtuple hps, containing the all the flag values
     FLAGS.exp_name = FLAGS.model_path + FLAGS.exp_name
-    print FLAGS.exp_name
     hps_dict = {}
     for key, val in FLAGS.__flags.iteritems():
         hps_dict[key] = val
     hps = namedtuple("hps", hps_dict.keys())(**hps_dict)
-    print hps
 
     # choose what level of logging you want
     tf.logging.set_verbosity(tf.logging.INFO)
@@ -140,8 +138,7 @@ def main(_):
     vocab = Vocab(hps.vocab_path, hps.vocab_size, hps.emb_size)
     # 如果设置了pretain_embedding参数，则预先加载到vocab对象中
     if hps.pretrain_embedding:
-        vocab.get_trimmed_embeding(hps.pretrain_embedding)
-
+        vocab.get_trimmed_embedding(hps.pretrain_embedding)
 
     # a seed value for randomness
     tf.set_random_seed(111)
@@ -173,4 +170,3 @@ def main(_):
 ###############################################################################
 if __name__ == "__main__":
     tf.app.run()
-

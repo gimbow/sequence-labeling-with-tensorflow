@@ -84,7 +84,7 @@ class Model(object):
         """
         hps = self.hps
         self.summary     = tf.summary.merge_all()
-        self.file_writer = tf.summary.FileWriter(hps.log_path, self.sess.graph)
+        self.file_writer = tf.summary.FileWriter(hps.model_path, self.sess.graph)
         return 0
 
 
@@ -125,7 +125,8 @@ class Model(object):
         with tf.variable_scope("embedding_op"):
             # 是否使用pre_train的词向量
             if hps.pretrain_embedding:
-                self.embedding = tf.Variable(vocab.embedding, dtype=float32, trainable=hps.fine_tune)
+                self.embedding = tf.Variable(self.vocab.embedding, \
+                    dtype=tf.float32, trainable=hps.fine_tune)
             else:
                 self.embedding = tf.get_variable("embedding",
                     shape=[self.vocab_size, self.emb_size], dtype=tf.float32)
