@@ -10,6 +10,7 @@ import glob
 import random
 from operator import itemgetter
 from collections import OrderedDict
+import numpy as np
 
 ###############################################################################
 # This has a vocab id, which is used to represent OOV words
@@ -36,11 +37,11 @@ def gen_tags(word):
     return tag
 
 
-def build_vocab(raw_files, vocab_path):
+def build_vocab(raw_files, vocab_file):
     """
     parse the original file; give the notation and build vocabulary
     """
-    fp_vocab = open(vocab_path, "w")
+    fp_vocab = open(vocab_file, "w")
     vocab = OrderedDict()
     for f in raw_files:
         print f
@@ -164,26 +165,26 @@ class Vocab(object):
 
 
     ###########################################################################
-    def set_trimmed_embedding(self, pretrain_filename, trimmed_filename):
+    def set_trimmed_embedding(self, pretrain_file, trimmed_file):
         """
         Saves word embedding embedding in numpy array
         """
         embedding = np.zeros([len(self.word_to_id), self.emb_size])
         try:
-            with open(pretrain_filename, "r") as fp:
+            with open(pretrain_file, "r") as fp:
                 for line in fp:
                     line = line.strip().split()
                     word = line[0]
-                    embedding = map(float, line[1:])
-                    if len(embedding) != self.emb_size:
+                    vector = map(float, line[1:])
+                    if len(vector) != self.emb_size:
                         print >> sys.stderr, "pretrain embedding size != emb_size"
                         break
                     if word in self.word_to_id:
                         word_idx = self.word_to_id[word]
-                        embedding[word_idx] = np.asarray(embedding)
+                        embedding[word_idx] = np.asarray(vector)
         except IOError:
             return -1
-        np.savez_compressed(trimmed_filename, embedding=embedding)
+        np.savez_compressed(trimmed_file, embedding=embedding)
         return 0
 
 
@@ -228,10 +229,10 @@ if __name__ == "__main__":
     vocab_file = "data/vocab.txt"
     max_size = 1000000
     emb_size = 50
-    pretrain_filename = ""
-    trimmed_filename = ""
+    pretrain_file = "./data/pretrain_embedding.txt"
+    trimmed_file = "./data/pretrain_embedding.npz"
     vocab = Vocab(vocab_file, max_size, emb_size)
-    #vocab.set_trimmed_embedding(pretrain_filename, trimmed_filename)
-    #vocab.get_trimmed_embedding(trimmed_filename)
+    vocab.set_trimmed_embedding(pretrain_file, trimmed_file)
+    vocab.get_trimmed_embedding(trimmed_file)
     print vocab.get_chunks([0,2,0,2,3,1])
 
