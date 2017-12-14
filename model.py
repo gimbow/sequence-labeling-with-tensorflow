@@ -84,7 +84,7 @@ class Model(object):
         """
         hps = self.hps
         self.summary     = tf.summary.merge_all()
-        self.file_writer = tf.summary.FileWriter(hps.model_path, self.sess.graph)
+        self.file_writer = tf.summary.FileWriter(hps.log_path, self.sess.graph)
         return 0
 
 
@@ -136,27 +136,23 @@ class Model(object):
             # bigram
             self.bigram_embedding = tf.nn.embedding_lookup(self.embedding,
                     self.bigram_batch, name="bigram_embedding")
+            # concat
+            self.embedding_concat = tf.concat([self.unigram_embedding, self.bigram_embedding], axis=-1)
 
         # bilstm op
         with tf.variable_scope("bilstm_op"):
             lstm_cell = tf.contrib.rnn.LSTMCell(hps.hidden_size)
-            # unigram
-            (unigram_fw, unigram_bw), _ = tf.nn.bidirectional_dynamic_rnn(lstm_cell, lstm_cell,
-                self.unigram_embedding, sequence_length=self.lens, dtype=tf.float32)
-            self.unigram_output = tf.concat([unigram_fw, unigram_bw], axis=-1)
-            # bigram
-            (bigram_fw, bigram_bw), _ = tf.nn.bidirectional_dynamic_rnn(lstm_cell, lstm_cell,
-                self.bigram_embedding, sequence_length=self.lens, dtype=tf.float32)
-            self.bigram_output = tf.concat([bigram_fw, bigram_bw], axis=-1)
-            self.sum_output = tf.add(self.unigram_output, self.bigram_output)
+            (embedding_fw, embedding_bw), _ = tf.nn.bidirectional_dynamic_rnn(lstm_cell, lstm_cell,
+                self.embedding_concat, sequence_length=self.lens, dtype=tf.float32)
+            self.embedding_output = tf.concat([embedding_fw, embedding_bw], axis=-1)
 
         # FC op
         with tf.variable_scope("projection_op"):
             W = tf.get_variable("W", shape=[2 * hps.hidden_size, self.tag_size], dtype=tf.float32)
             b = tf.get_variable("b", shape=[self.tag_size], dtype=tf.float32, initializer=tf.zeros_initializer())
-            time_steps = tf.shape(self.sum_output)[1]
-            self.sum_output = tf.reshape(self.sum_output, [-1, 2 * hps.hidden_size])
-            self.pred = tf.matmul(self.sum_output, W) + b
+            time_steps = tf.shape(self.embedding_output)[1]
+            self.embedding_output = tf.reshape(self.embedding_output, [-1, 2 * hps.hidden_size])
+            self.pred = tf.matmul(self.embedding_output, W) + b
             self.logits = tf.reshape(self.pred, [-1, time_steps, self.tag_size])
 
         # loss and label op

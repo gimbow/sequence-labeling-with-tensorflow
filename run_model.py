@@ -29,6 +29,7 @@ tf.app.flags.DEFINE_string("eval_data", "./data/*.eval", "include wildcards to a
 tf.app.flags.DEFINE_string("predict_data", "./data/*.predict", "include wildcards to access multiple datafiles.")
 tf.app.flags.DEFINE_string("model_path", "./model/", "Root directory for model.")
 tf.app.flags.DEFINE_string("exp_name", "cws", "Root directory for model.")
+tf.app.flags.DEFINE_string("log_path", "./log/", "Root directory for log.")
 tf.app.flags.DEFINE_string("vocab_path", "./data/vocab.txt", "Path expression to text vocabulary file.")
 
 # important settings
