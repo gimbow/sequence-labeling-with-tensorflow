@@ -84,7 +84,7 @@ class Model(object):
         """
         hps = self.hps
         self.summary     = tf.summary.merge_all()
-        self.file_writer = tf.summary.FileWriter(hps.log_path, self.sess.graph)
+        self.file_writer = tf.summary.FileWriter(hps.model_path, self.sess.graph)
         return 0
 
 
